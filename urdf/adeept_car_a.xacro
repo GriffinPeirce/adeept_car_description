@@ -1,0 +1,83 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="adeept_car_a">
+ 
+  <xacro:property name="base_width" value="0.085"/>
+  <xacro:property name="base_len" value="0.18"/>
+  <xacro:property name="base_mass" value="0.9"/>
+  <xacro:property name="wheel_radius" value="0.025"/>
+  <xacro:property name="wheel_width" value="0.01"/>
+  <xacro:property name="wheel_mass" value="0.03"/>
+  <xacro:property name="base_wheel_gap" value="0.005"/>
+  <xacro:property name="wheel_separation" value="0.105"/>
+  <xacro:property name="wheel_joint_offset_x" value="-0.05"/>
+  <xacro:property name="wheel_joint_offset_z" value="-0.025"/>
+  <xacro:property name="caster_wheel_radius" value="0.01"/>
+  <xacro:property name="caster_wheel_joint_offset_x" value="0.07"/>
+  <xacro:property name="caster_wheel_joint_offset_z" value="-0.04"/>
+
+  <xacro:include filename="$(find adeept_car_description)/urdf/materials.xacro" />
+  <xacro:include filename="$(find adeept_car_description)/urdf/macros.xacro" />
+ 
+  <link name="base_link">
+    <xacro:box_inertia m="${base_mass}" w="${base_len}" h="${base_width}" d="0.01"/>
+    <visual>
+      <geometry>
+        <box size="${base_len} ${base_width} 0.01"/>
+      </geometry>
+    </visual>
+    <collision>
+      <geometry>
+        <box size="${base_len} ${base_width} 0.01"/>
+      </geometry>
+    </collision>
+  </link>
+ 
+  <xacro:wheel prefix="left" reflect="1" mass="${wheel_mass}"/>
+  <xacro:wheel prefix="right" reflect="-1" mass="${wheel_mass}"/>
+ 
+   <link name="caster_wheel">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <sphere radius="${caster_wheel_radius}"/>
+      </geometry>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <sphere radius="${caster_wheel_radius}"/>
+      </geometry>
+    </collision>
+    <xacro:sphere_inertia m="5" r="${caster_wheel_radius}"/>
+  </link>
+ 
+  <joint name="caster_wheel_joint" type="continuous">
+    <axis xyz="0 1 0" rpy="0 0 0" />
+    <parent link="base_link"/>
+    <child link="caster_wheel"/>
+    <origin xyz="${caster_wheel_joint_offset_x} 0 ${caster_wheel_joint_offset_z}" rpy="0 0 0"/>
+  </joint>
+
+  <gazebo reference="caster_wheel" >
+    <mu1>1e-6</mu1>
+    <mu2>1e-6</mu2>
+  </gazebo>
+
+  <gazebo>
+    <plugin name="differential_drive_controller" filename="libgazebo_ros_diff_drive.so">
+      <alwaysOn>true</alwaysOn>
+      <legacyMode>false</legacyMode>
+      <updateRate>40</updateRate>
+      <leftJoint>left_wheel_joint</leftJoint>
+      <rightJoint>right_wheel_joint</rightJoint>
+      <wheelSeparation>${wheel_separation}</wheelSeparation>
+      <wheelDiameter>${wheel_radius * 2}</wheelDiameter>
+      <torque>1</torque>
+      <commandTopic>diff_vel</commandTopic>
+      <odometryTopic>odom</odometryTopic>
+      <odometryFrame>odom</odometryFrame>
+      <robotBaseFrame>base_footprint</robotBaseFrame>
+    </plugin>
+  </gazebo>
+
+</robot>
